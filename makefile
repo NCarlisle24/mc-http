@@ -5,7 +5,7 @@ else
 endif
 
 CXX := g++
-CXXFLAGS := -Iinclude -Wall -MMD -MP -std=c++20
+CXXFLAGS := -Iinclude -Wall -MMD -MP -std=c++20 -g
 
 ifeq ($(OS),Windows_NT)
 	LIBFLAGS := -lws2_32

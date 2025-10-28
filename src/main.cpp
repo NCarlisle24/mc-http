@@ -11,9 +11,15 @@ int main() {
     #endif
 
     // do stuff
-    Server* server = new Server("127.0.0.1", 3000);
+    Server* server = new Server("0.0.0.0", 3000);
     server->listen();
     server->accept(0);
+    std::string response = server->receive(0);
+    server->send(0, "Hi there!");
+
+    std::cout << response;
+
+    delete server;
 
     // cleanup
     #ifdef _WIN32

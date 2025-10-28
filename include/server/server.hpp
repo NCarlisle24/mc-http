@@ -33,6 +33,7 @@
 #include <stdbool.h>
 
 #define DEFAULT_MAX_CONNECTIONS 20
+#define RECEIVE_BUFFER_SIZE 1024
 
 typedef unsigned int connectionId_t;
 
@@ -60,7 +61,10 @@ class Server {
         short port;
 
         Server(const char* const &ipAddress, const short &port);
+        ~Server();
         void listen(const unsigned int &maxConnections = DEFAULT_MAX_CONNECTIONS);
-        void accept(const connectionId_t &clientId);
-        void close(const connectionId_t &clientId);
+        void accept(const connectionId_t &connectionId);
+        void close(const connectionId_t &connectionId);
+        std::string receive(const connectionId_t &connectionId);
+        void send(const connectionId_t &connectionId, const std::string &data);
 };
