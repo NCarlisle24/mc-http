@@ -26,6 +26,9 @@
 #endif
 
 #include <stdio.h>
+#include <bool.h>
+
+#define MAX_CONNECTIONS 10
 
 inline bool isValidSocket(socket_t sock) {
     #ifdef _WIN32
@@ -41,4 +44,18 @@ inline bool isError(int result) {
     #else
         return result < 0;
     #endif
+}
+
+class Server {
+    socket_t hostSock;
+    socket_t connections[MAX_CONNECTIONS];
+
+    Server(const unsigned int &port, const char* const &ipAddress) {
+        // create the socket
+        hostSock = socket(AF_INET, SOCK_STREAM, 0); // IPv4, stream socket, TCP
+        if (!isValidSocket(hostSock)) {
+            perror("[main] Failed to create socket.\n");
+            return;
+        }
+    }
 }

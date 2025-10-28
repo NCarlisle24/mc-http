@@ -12,7 +12,7 @@ int main() {
 
     // do stuff
     socket_t serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (serverSocket == INVALID_SOCKET) {
+    if (!isValidSocket(serverSocket)) {
         perror("[main] Failed to create socket.\n");
         return 1;
     }
