@@ -3,6 +3,7 @@
 #include <http/request.hpp>
 #include <http/response.hpp>
 
+// OS-specific includes
 #ifdef _WIN32
     // nasty windows stuff
     #define WIN32_LEAN_AND_MEAN
@@ -12,10 +13,11 @@
     typedef SOCKET socket_t;
     #define CLOSESOCKET closesocket
 #else
-    // simple unix/posix! :DDDD
+    // simple unix/posix! :DDD
     #include <sys/types.h>
     #include <sys/socket.h>
     #include <netinet/in.h>
+    #include <netinet/ip.h>
     #include <arpa/inet.h>
     #include <unistd.h>
     #include <errno.h>
@@ -25,10 +27,14 @@
     #define INVALID_SOCKET -1
 #endif
 
-#include <stdio.h>
-#include <bool.h>
+// Actual stuff
+#include <iostream>
+#include <unordered_map>
+#include <stdbool.h>
 
-#define MAX_CONNECTIONS 10
+#define DEFAULT_MAX_CONNECTIONS 20
+
+typedef unsigned int connectionId_t;
 
 inline bool isValidSocket(socket_t sock) {
     #ifdef _WIN32
@@ -47,15 +53,14 @@ inline bool isError(int result) {
 }
 
 class Server {
-    socket_t hostSock;
-    socket_t connections[MAX_CONNECTIONS];
+    public:
+        socket_t hostSocket;
+        std::unordered_map<connectionId_t, socket_t> connections;
+        std::string ipAddress;
+        short port;
 
-    Server(const unsigned int &port, const char* const &ipAddress) {
-        // create the socket
-        hostSock = socket(AF_INET, SOCK_STREAM, 0); // IPv4, stream socket, TCP
-        if (!isValidSocket(hostSock)) {
-            perror("[main] Failed to create socket.\n");
-            return;
-        }
-    }
-}
+        Server(const char* const &ipAddress, const short &port);
+        void listen(const unsigned int &maxConnections = DEFAULT_MAX_CONNECTIONS);
+        void accept(const connectionId_t &clientId);
+        void close(const connectionId_t &clientId);
+};

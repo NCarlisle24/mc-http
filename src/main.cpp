@@ -11,12 +11,9 @@ int main() {
     #endif
 
     // do stuff
-    socket_t serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (!isValidSocket(serverSocket)) {
-        perror("[main] Failed to create socket.\n");
-        return 1;
-    }
-
+    Server* server = new Server("127.0.0.1", 3000);
+    server->listen();
+    server->accept(0);
 
     // cleanup
     #ifdef _WIN32
