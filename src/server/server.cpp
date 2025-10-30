@@ -33,13 +33,19 @@ Server::Server(const char* const &ipAddress, const short &port) {
 }
 
 Server::~Server() {
+    int result;
     for (const auto& connection : connections) {
-        close(connection.first);
+        result = ::CLOSESOCKET(connection.second);
+        if (isError(result)) {
+            std::cerr << "[Server::~Server] Error: Failed to close connection with identifier '" << connection.first
+                    << "'. Error code " << errno << "." << std::endl;
+            return;
+        }
     }
 
-    int result = ::CLOSESOCKET(hostSocket);
+    result = ::CLOSESOCKET(hostSocket);
     if (isError(result)) {
-        std::cerr << "[Server::~Server] Error: Failed to close own socket. Error code "
+        std::cerr << "[Server::~Server] Error: Failed to close server socket. Error code "
                   << errno << "." << std::endl;
         
         return;
@@ -58,7 +64,7 @@ void Server::listen(const unsigned int &maxConnections) {
 void Server::accept(const connectionId_t &connectionId) {
     // check if connection exists
     if (connections.contains(connectionId)) {
-        std::cerr << "[Server::accept] Warning: Client with ID '" << connectionId
+        std::cerr << "[Server::accept] Warning: Connection with ID '" << connectionId
                   << "' already exists. Closing old connection." << std::endl;
         
         close(connectionId);
@@ -80,13 +86,20 @@ void Server::accept(const connectionId_t &connectionId) {
 }
 
 void Server::close(const connectionId_t &connectionId) {
+    if (!connections.contains(connectionId)) {
+        std::cerr << "[Server::close] Error: Connection with ID '" << connectionId
+                  << "' doesn't exist." << std::endl;
+        return;
+    }
+
     int result = ::CLOSESOCKET(connections[connectionId]);
     if (isError(result)) {
         std::cerr << "[Server::close] Error: Failed to close connection with identifier '" << connectionId
                   << "'. Error code " << errno << "." << std::endl;
-        
         return;
     }
+
+    connections.erase(connectionId);
 }
 
 std::string Server::receive(const connectionId_t &connectionId) {

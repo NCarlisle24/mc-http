@@ -20,9 +20,9 @@ int main() {
 
     HttpRequest request(requestString);
 
-    std::cerr << requestString << "\n\n";
     request.print();
 
+    server->close(0);
     delete server;
 
     // cleanup

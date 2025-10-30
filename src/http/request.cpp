@@ -19,16 +19,26 @@ HttpRequest::HttpRequest(const std::string &requestString) {
     constexpr size_t VALUE_BUFFER_LENGTH = 256;
 
     char key[KEY_BUFFER_LENGTH];
+    char hashKey[KEY_BUFFER_LENGTH];
     char value[VALUE_BUFFER_LENGTH];
     while (std::getline(inputStream, line)) {
         // remove trailing newlines
         line.erase(std::remove(line.begin(), line.end(), '\n'), line.cend());
         line.erase(std::remove(line.begin(), line.end(), '\r'), line.cend());
 
+        if (line[0] == '\0') continue;
+
         key[KEY_BUFFER_LENGTH - 1] = '\0';
         value[VALUE_BUFFER_LENGTH - 1] = '\0';
 
         readHttpHeader(line.c_str(), key, value);
+
+        // convert the key to lowercase for hashing
+        strncpy(hashKey, key, KEY_BUFFER_LENGTH);
+        const size_t keyLength = strlen(hashKey);
+        for (size_t i = 0; i < keyLength; i++) {
+            hashKey[i] = tolower(hashKey[i]);
+        }
 
         if (key[KEY_BUFFER_LENGTH - 1] != '\0' || value[VALUE_BUFFER_LENGTH - 1] != '\0') {
             std::cerr << "[HttpRequest::HttpRequest] Warning: HTTP request line too long. Skipping '"
@@ -37,7 +47,7 @@ HttpRequest::HttpRequest(const std::string &requestString) {
             std::cerr << "[HttpRequest::HttpRequest] Warning: Couldn't read HTTP request line. Skipping '"
                       << line << "'." << std::endl;
         } else {
-            this->headers.insert({key, value});
+            this->headers.insert({hashKey, {key, value}});
         }
     }
 }
@@ -46,6 +56,6 @@ void HttpRequest::print() {
     std::cerr << this->method << " / HTTP/" << this->httpVersion << std::endl;
 
     for (const auto &header : this->headers) {
-        std::cerr << header.first << ": " << header.second << std::endl;
+        std::cerr << header.second.key << ": " << header.second.value << std::endl;
     }
 }

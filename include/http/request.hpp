@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
+#include <cctype>
 #include <iostream>
 #include <unordered_map>
 #include <sstream>
@@ -32,13 +33,18 @@ void inline readHttpHeader(const char* const &header, char* const &key, char* co
     value[j] = '\0';
 }
 
+typedef struct {
+    std::string key;
+    std::string value;
+} HttpHeader;
+
 class HttpRequest {
     public:
         std::string method; // GET, POST, etc.
         std::string path; // url
         std::string httpVersion;
 
-        std::unordered_map<std::string, std::string> headers; // keys are case-insensitive
+        std::unordered_map<std::string, HttpHeader> headers; // keys are case-insensitive
 
         std::string body; // relvant for POST and PUT
         size_t bodyLength;
