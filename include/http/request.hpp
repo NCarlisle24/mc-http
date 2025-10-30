@@ -43,18 +43,13 @@ class HttpRequest {
         std::string method; // GET, POST, etc.
         std::string path; // url
         std::string httpVersion;
-
         std::unordered_map<std::string, HttpHeader> headers; // keys are case-insensitive
-
+        std::unordered_map<std::string, std::string> queryParameters; // keys are case-sensitive
         std::string body; // relvant for POST and PUT
         size_t bodyLength;
-
-        std::unordered_map<std::string, std::string> queryParams; // ".../?key=value" stuff
-
         std::string clientIp;
         int clientPort;
-
-        // these are more or less optional
+        // optional params
         std::string host;
         std::string contentType;
         size_t contentLength;
@@ -63,4 +58,5 @@ class HttpRequest {
         HttpRequest(const std::string &requestString);
         // ~HttpRequest();
         void print();
+        void printQueryParameters();
 };

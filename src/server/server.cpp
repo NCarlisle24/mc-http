@@ -30,6 +30,8 @@ Server::Server(const char* const &ipAddress, const short &port) {
                     << ":" << port << "'. Error code " << errno << "." << std::endl;
         return;
     }
+
+    this->isBound = true;
 }
 
 Server::~Server() {
@@ -50,6 +52,8 @@ Server::~Server() {
         
         return;
     }
+
+    this->isBound = false;
 }
 
 void Server::listen(const unsigned int &maxConnections) {
@@ -59,6 +63,8 @@ void Server::listen(const unsigned int &maxConnections) {
                     << ":" << port << "'. Error code " << errno << "." << std::endl;
         return;
     }
+
+    this->isListening = true;
 }
 
 void Server::accept(const connectionId_t &connectionId) {

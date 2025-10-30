@@ -59,6 +59,8 @@ class Server {
         std::unordered_map<connectionId_t, socket_t> connections;
         std::string ipAddress;
         short port;
+        bool isBound = false;
+        bool isListening = false;;
 
         Server(const char* const &ipAddress, const short &port);
         ~Server();
