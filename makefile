@@ -42,7 +42,7 @@ $(TARGET): $(OBJ_FILES)
 
 # Object files
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
-	$(MKDIR) $(dir $@)
+	@$(MKDIR) $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 -include $(DEP_FILES)

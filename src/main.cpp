@@ -1,4 +1,5 @@
 #include <server/server.hpp>
+#include <http/request.hpp>
 
 int main() {
     // if on windows, initialize winsock
@@ -14,10 +15,13 @@ int main() {
     Server* server = new Server("0.0.0.0", 3000);
     server->listen();
     server->accept(0);
-    std::string response = server->receive(0);
+    std::string requestString = server->receive(0);
     server->send(0, "Hi there!");
 
-    std::cout << response;
+    HttpRequest request(requestString);
+
+    std::cerr << requestString << "\n\n";
+    request.print();
 
     delete server;
 

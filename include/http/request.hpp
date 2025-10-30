@@ -1,30 +1,60 @@
 #pragma once
 
-#include <types.h>
+#include <algorithm>
+#include <cstddef>
+#include <cstdio>
+#include <cstring>
+#include <iostream>
 #include <unordered_map>
+#include <sstream>
+#include <string>
+
+void inline readHttpHeader(const char* const &header, char* const &key, char* const &value) {
+    if (header[0] == '\0' || header[0] == ':') {
+        return;
+    }
+
+    int i = 0;
+    while (header[i] != ':') {
+        key[i] = header[i];
+        i++;
+    }
+    key[i] = '\0';
+    i += 2;
+
+    int j = 0;
+    while (header[i] != '\0') {
+        value[j] = header[i];
+        
+        i++;
+        j++;
+    }
+    value[j] = '\0';
+}
 
 class HttpRequest {
     public:
-        char* method; // GET, POST, etc.
-        char* path; // url
-        char* httpVersion;
+        std::string method; // GET, POST, etc.
+        std::string path; // url
+        std::string httpVersion;
 
-        std::unordered_map<char*, char*> headers; // keys are case-insensitive
+        std::unordered_map<std::string, std::string> headers; // keys are case-insensitive
 
-        char* body; // relvant for POST and PUT
+        std::string body; // relvant for POST and PUT
         size_t bodyLength;
 
-        std::unordered_map<char*, char*> queryParams; // ".../?key=value" stuff
+        std::unordered_map<std::string, std::string> queryParams; // ".../?key=value" stuff
 
-        char* clientIp;
+        std::string clientIp;
         int clientPort;
 
         // these are more or less optional
-        char* host;
-        char* contentType;
+        std::string host;
+        std::string contentType;
         size_t contentLength;
         int keepAlive;
 
-        HttpRequest(const char* const &httpText);
-        ~HttpRequest();
+        HttpRequest(const std::string &requestString);
+        // ~HttpRequest();
+        void print();
 };

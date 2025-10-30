@@ -26,7 +26,7 @@ Server::Server(const char* const &ipAddress, const short &port) {
 
     result = bind(hostSocket, (struct sockaddr*)&serverInfo, sizeof(serverInfo));
     if (isError(result)) {
-        std::cerr << "[Server::Server] Error: Failed to bind socket on address'" << ipAddress
+        std::cerr << "[Server::Server] Error: Failed to bind socket on address '" << ipAddress
                     << ":" << port << "'. Error code " << errno << "." << std::endl;
         return;
     }
@@ -112,7 +112,7 @@ void Server::send(const connectionId_t &connectionId, const std::string &data) {
 
     int result = ::send(connections[connectionId], data.c_str(), data.length(), 0);
     if (isError(result)) {
-        std::cerr << "[Server:send] Error: Failed to send data across connection with ID '"
+        std::cerr << "[Server::send] Error: Failed to send data across connection with ID '"
                   << connectionId << "'.  Error code " << errno << "." << std::endl;
         
         return;
