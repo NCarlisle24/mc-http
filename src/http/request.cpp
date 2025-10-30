@@ -12,6 +12,25 @@ HttpRequest::HttpRequest(const std::string &requestString) {
     char tempHttpVersion[4];
 
     sscanf(line.c_str(), "%s %s HTTP/%s", tempMethod, tempPath, tempHttpVersion);
+
+    this->rawPath = tempPath;
+
+    // query parameters
+    strtok(tempPath, "?");
+    char* queryKey = strtok(NULL, "=");
+    char* queryValue = strtok(NULL, "&");
+    while (queryKey != NULL) {
+        if (queryValue == NULL) {
+            this->queryParameters.insert({queryKey, ""});
+        } else {
+            this->queryParameters.insert({queryKey, queryValue});
+        }
+
+        queryKey = strtok(NULL, "=");
+        queryValue = strtok(NULL, "&");
+    }
+
+    // fill class attributes
     this->method = tempMethod;
     this->path = tempPath;
     this->httpVersion = tempHttpVersion;
@@ -52,26 +71,10 @@ HttpRequest::HttpRequest(const std::string &requestString) {
             this->headers.insert({headerHashKey, {headerKey, headerValue}});
         }
     }
-
-    // query parameters
-
-    strtok(tempPath, "?");
-    char* queryKey = strtok(NULL, "=");
-    char* queryValue = strtok(NULL, "&");
-    while (queryKey != NULL) {
-        if (queryValue == NULL) {
-            this->queryParameters.insert({queryKey, ""});
-        } else {
-            this->queryParameters.insert({queryKey, queryValue});
-        }
-
-        queryKey = strtok(NULL, "=");
-        queryValue = strtok(NULL, "&");
-    }
 }
 
 void HttpRequest::print() {
-    std::cerr << this->method << " " << this->path << " HTTP/" << this->httpVersion << std::endl;
+    std::cerr << this->method << " " << this->rawPath << " HTTP/" << this->httpVersion << std::endl;
 
     // TODO: make these print in the original order
     for (const auto &header : this->headers) {
@@ -83,4 +86,17 @@ void HttpRequest::printQueryParameters() {
     for (const auto &parameter : this->queryParameters) {
         std::cerr << parameter.first << " = '" << parameter.second << "'" << std::endl;
     }
+}
+
+std::unordered_map<std::string, std::string> HttpRequest::getHeaders() {
+    std::unordered_map<std::string, std::string> returnedHeaders;
+    for (const auto &header : this->headers) {
+        returnedHeaders.insert({header.second.key, header.second.value});
+    }
+
+    return returnedHeaders;
+}
+
+std::unordered_map<std::string, std::string> HttpRequest::getQueryParameters() {
+    return this->queryParameters;
 }

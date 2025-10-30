@@ -40,23 +40,32 @@ typedef struct {
 
 class HttpRequest {
     public:
+        // implemented
         std::string method; // GET, POST, etc.
         std::string path; // url
+        std::string rawPath; // url with query parameters
         std::string httpVersion;
-        std::unordered_map<std::string, HttpHeader> headers; // keys are case-insensitive
-        std::unordered_map<std::string, std::string> queryParameters; // keys are case-sensitive
+
+        // not implemented
         std::string body; // relvant for POST and PUT
-        size_t bodyLength;
         std::string clientIp;
         int clientPort;
-        // optional params
+
+        // might not implement
         std::string host;
         std::string contentType;
         size_t contentLength;
         int keepAlive;
 
+        // public methods
         HttpRequest(const std::string &requestString);
         // ~HttpRequest();
         void print();
         void printQueryParameters();
+        std::unordered_map<std::string, std::string> getHeaders();
+        std::unordered_map<std::string, std::string> getQueryParameters();
+    
+    private:
+        std::unordered_map<std::string, HttpHeader> headers; // keys are case-insensitive
+        std::unordered_map<std::string, std::string> queryParameters; // keys are case-sensitive
 };
