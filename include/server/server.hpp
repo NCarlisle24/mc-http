@@ -1,8 +1,5 @@
 #pragma once
 
-#include <http/request.hpp>
-#include <http/response.hpp>
-
 // OS-specific includes
 #ifdef _WIN32
     // nasty windows stuff
@@ -28,9 +25,13 @@
 #endif
 
 // Actual stuff
+#include <http/request.hpp>
+#include <http/response.hpp>
+
+#include <cstdbool>
 #include <iostream>
+#include <functional>
 #include <unordered_map>
-#include <stdbool.h>
 
 #define DEFAULT_MAX_CONNECTIONS 20
 #define RECEIVE_BUFFER_SIZE 1024
@@ -58,9 +59,10 @@ class Server {
         socket_t hostSocket;
         std::unordered_map<connectionId_t, socket_t> connections;
         std::string ipAddress;
+        std::function middleware;
         short port;
         bool isBound = false;
-        bool isListening = false;;
+        bool isListening = false;
 
         Server(const char* const &ipAddress, const short &port);
         ~Server();

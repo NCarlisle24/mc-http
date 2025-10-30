@@ -10,7 +10,6 @@ HttpRequest::HttpRequest(const std::string &requestString) {
     char tempMethod[16];
     char tempPath[256];
     char tempHttpVersion[4];
-
     sscanf(line.c_str(), "%s %s HTTP/%s", tempMethod, tempPath, tempHttpVersion);
 
     this->rawPath = tempPath;

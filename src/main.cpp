@@ -27,10 +27,13 @@ int main() {
     std::string requestString = server->receive(0);
     server->send(0, "Hi there!");
 
+    std::cerr << requestString << std::endl;
+    
+    std::cerr << "-------------------------" << std::endl;
     HttpRequest request(requestString);
-    std::cerr << requestString << "\n--------------" << std::endl;
     request.print();
-    std::cerr << "-----------" << std::endl;
+
+    std::cerr << "-------------------------" << std::endl;
     request.printQueryParameters();
 
     server->close(0);

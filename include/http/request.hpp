@@ -47,7 +47,7 @@ class HttpRequest {
         std::string httpVersion;
 
         // not implemented
-        std::string body; // relvant for POST and PUT
+        std::string body; // relevant for POST and PUT
         std::string clientIp;
         int clientPort;
 
