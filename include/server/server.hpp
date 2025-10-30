@@ -30,7 +30,6 @@
 
 #include <cstdbool>
 #include <iostream>
-#include <functional>
 #include <unordered_map>
 
 #define DEFAULT_MAX_CONNECTIONS 20
@@ -59,7 +58,6 @@ class Server {
         socket_t hostSocket;
         std::unordered_map<connectionId_t, socket_t> connections;
         std::string ipAddress;
-        std::function middleware;
         short port;
         bool isBound = false;
         bool isListening = false;
