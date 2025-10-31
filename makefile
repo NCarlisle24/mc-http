@@ -5,10 +5,10 @@ else
 endif
 
 CXX := g++
-CXXFLAGS := -Iinclude -Wall -MMD -MP -std=c++20 -g
+CXXFLAGS := -Iinclude -Wall -MMD -MP -std=c++20 -g -pthread
 
 ifeq ($(OS),Windows_NT)
-	LIBFLAGS := -lws2_32
+	LIBFLAGS := -lws2_32 
 else
 	LIBFLAGS := 
 endif

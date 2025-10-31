@@ -1,6 +1,6 @@
 #include <server/server.hpp>
 
-Server::Server(const char* const &ipAddress, const short &port) {
+Server::Server(const std::string &ipAddress, const short &port) {
     this->ipAddress = ipAddress;
     this->port = port;
 
@@ -16,7 +16,7 @@ Server::Server(const char* const &ipAddress, const short &port) {
     struct sockaddr_in serverInfo;
     serverInfo.sin_family = AF_INET; // IPv4
     serverInfo.sin_port = htons(port); // IPv4
-    int result = inet_pton(AF_INET, ipAddress, &(serverInfo.sin_addr.s_addr));
+    int result = inet_pton(AF_INET, ipAddress.c_str(), &(serverInfo.sin_addr.s_addr));
     if (result < 0) {
         std::cerr << "[Server::Server] Error: Failed to convert IP address '" << ipAddress
                   << "' to network short. Error code " << errno << "." << std::endl;
@@ -37,7 +37,7 @@ Server::Server(const char* const &ipAddress, const short &port) {
 Server::~Server() {
     int result;
     for (const auto& connection : this->connections) {
-        result = ::CLOSESOCKET(connection.second);
+        result = ::close(connection.second);
         if (isError(result)) {
             std::cerr << "[Server::~Server] Error: Failed to close connection with identifier '" << connection.first
                     << "'. Error code " << errno << "." << std::endl;
@@ -45,7 +45,7 @@ Server::~Server() {
         }
     }
 
-    result = ::CLOSESOCKET(this->hostSocket);
+    result = ::close(this->hostSocket);
     if (isError(result)) {
         std::cerr << "[Server::~Server] Error: Failed to close server socket. Error code "
                   << errno << "." << std::endl;
@@ -56,13 +56,15 @@ Server::~Server() {
     this->isBound = false;
 }
 
-void Server::listen(const unsigned int &maxConnections) {
-    int result = ::listen(this->hostSocket, maxConnections);
+void Server::listen(const size_t &numThreads, const size_t &tasksQueueSize, const size_t &listeningQueueSize) {
+    int result = ::listen(this->hostSocket, listeningQueueSize);
     if (isError(result)) {
         std::cerr << "[Server::listen] Error: Failed to listen to socket on address'" << this->ipAddress
                     << ":" << this->port << "'. Error code " << errno << "." << std::endl;
         return;
     }
+
+    this->threadPool = new ThreadPool(numThreads, tasksQueueSize);
 
     this->isListening = true;
 }
@@ -73,18 +75,22 @@ void Server::accept(const connectionId_t &connectionId) {
         std::cerr << "[Server::accept] Warning: Connection with ID '" << connectionId
                   << "' already exists. Closing old connection." << std::endl;
         
-        close(connectionId);
+        close(connectionId); // THIS IS CORRECT DO NOT MODIFY
     }
 
     // accept the connection
     struct sockaddr_in clientInfo;
     socklen_t clientInfoSize = sizeof(struct sockaddr_in);
 
-    socket_t clientSocket = ::accept(this->hostSocket, (struct sockaddr*)&clientInfo, &clientInfoSize);
-    if (!isValidSocket(clientSocket)) {
-        std::cerr << "[Server::accept] Error: Failed to accept connection with identifier '" << connectionId
-                  << "'. Error code " << errno << "." << std::endl;
+    this->isAccepting = true;
 
+    socket_t clientSocket = ::accept(this->hostSocket, (struct sockaddr*)&clientInfo, &clientInfoSize);
+
+    this->isAccepting = false;
+
+    if (!isValidSocket(clientSocket)) {
+        std::cerr << "[Server::accept] Error: Failed to accept connection with ID '" << connectionId
+                  << "'. Error code " << errno << "." << std::endl;
         return;
     }
 
@@ -98,7 +104,7 @@ void Server::close(const connectionId_t &connectionId) {
         return;
     }
 
-    int result = ::CLOSESOCKET(this->connections[connectionId]);
+    int result = ::close(this->connections[connectionId]);
     if (isError(result)) {
         std::cerr << "[Server::close] Error: Failed to close connection with identifier '" << connectionId
                   << "'. Error code " << errno << "." << std::endl;
@@ -108,9 +114,27 @@ void Server::close(const connectionId_t &connectionId) {
     this->connections.erase(connectionId);
 }
 
-std::string Server::receive(const connectionId_t &connectionId) {
+void Server::receive(const connectionId_t &connectionId, const server_callback_t &callback) {
     if (!this->connections.contains(connectionId)) {
         std::cerr << "[Server::receive] Error: Connection with ID '" << connectionId
+                  << "' doesn't exist." << std::endl;
+        return;
+    }
+
+    socket_t serverSocket = this->connections[connectionId];
+
+    this->threadPool->enqueueTask(connectionId, [&serverSocket, &callback]() {
+        std::string buffer(RECEIVE_BUFFER_SIZE, '\0');
+        recv(serverSocket, (char*)buffer.c_str(), RECEIVE_BUFFER_SIZE, 0);
+        HttpRequest requestInput(buffer);
+        HttpResponse response = callback(requestInput);
+        // send it here
+    });
+}
+
+std::string Server::receiveSync(const connectionId_t &connectionId) {
+    if (!this->connections.contains(connectionId)) {
+        std::cerr << "[Server::receiveSync] Error: Connection with ID '" << connectionId
                   << "' doesn't exist." << std::endl;
         return "";
     }

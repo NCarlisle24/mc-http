@@ -1,48 +1,35 @@
-#include <server/server.hpp>
+#include <server/webServer.hpp>
 #include <http/request.hpp>
 
-int main() {
-    // if on windows, initialize winsock
-    #ifdef _WIN32
-        WSADATA wsaData;
-        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-            perror("[main] Failed to initialize Winsock.\n");
-            return 1;
-        }
-    #endif
+#define SERVER_IP_ADDRESS "127.0.0.1"
+#define SERVER_PORT 3000
 
-    // do stuff
-    Server* server = new Server("0.0.0.0", 3000);
-    if (!server->isBound) {
-        return 1;
-    }
+WebServer* server;
 
-    server->listen();
-    if (!server->isListening) {
-        return 1;
-    }
+void INThandler(int sig) {
+    signal(sig, SIG_IGN); // ignore the signal
 
-    server->accept(0);
+    std::cerr << "Shutting down server..." << std::endl;
 
-    std::string requestString = server->receive(0);
-    server->send(0, "Hi there!");
-
-    std::cerr << requestString << std::endl;
-    
-    std::cerr << "-------------------------" << std::endl;
-    HttpRequest request(requestString);
-    request.print();
-
-    std::cerr << "-------------------------" << std::endl;
-    request.printQueryParameters();
-
-    server->close(0);
+    shutdown(server->hostSocket, SHUT_RDWR);
     delete server;
 
-    // cleanup
-    #ifdef _WIN32
-        WSACleanup();
-    #endif
+    exit(0);
+}
 
+int main() {
+    // do stuff
+    server = new WebServer(SERVER_IP_ADDRESS, SERVER_PORT);
+
+    server->addRoute("/", [](const HttpRequest &request) {
+        std::cout << "Connected." << std::endl;
+        request.print();
+
+        HttpResponse placeholder;
+        return placeholder;
+    });
+    server->run();
+
+    delete server;
     return 0;
 }

@@ -72,7 +72,7 @@ HttpRequest::HttpRequest(const std::string &requestString) {
     }
 }
 
-void HttpRequest::print() {
+void HttpRequest::print() const {
     std::cerr << this->method << " " << this->rawPath << " HTTP/" << this->httpVersion << std::endl;
 
     // TODO: make these print in the original order
@@ -81,13 +81,13 @@ void HttpRequest::print() {
     }
 }
 
-void HttpRequest::printQueryParameters() {
+void HttpRequest::printQueryParameters() const {
     for (const auto &parameter : this->queryParameters) {
         std::cerr << parameter.first << " = '" << parameter.second << "'" << std::endl;
     }
 }
 
-std::unordered_map<std::string, std::string> HttpRequest::getHeaders() {
+std::unordered_map<std::string, std::string> HttpRequest::getHeaders() const {
     std::unordered_map<std::string, std::string> returnedHeaders;
     for (const auto &header : this->headers) {
         returnedHeaders.insert({header.second.key, header.second.value});
@@ -96,6 +96,6 @@ std::unordered_map<std::string, std::string> HttpRequest::getHeaders() {
     return returnedHeaders;
 }
 
-std::unordered_map<std::string, std::string> HttpRequest::getQueryParameters() {
+std::unordered_map<std::string, std::string> HttpRequest::getQueryParameters() const {
     return this->queryParameters;
 }

@@ -60,10 +60,10 @@ class HttpRequest {
         // public methods
         HttpRequest(const std::string &requestString);
         // ~HttpRequest();
-        void print();
-        void printQueryParameters();
-        std::unordered_map<std::string, std::string> getHeaders();
-        std::unordered_map<std::string, std::string> getQueryParameters();
+        void print() const;
+        void printQueryParameters() const;
+        std::unordered_map<std::string, std::string> getHeaders() const;
+        std::unordered_map<std::string, std::string> getQueryParameters() const;
     
     private:
         std::unordered_map<std::string, HttpHeader> headers; // keys are case-insensitive
