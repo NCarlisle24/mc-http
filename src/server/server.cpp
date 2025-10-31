@@ -35,7 +35,11 @@ Server::Server(const std::string &ipAddress, const short &port) {
 }
 
 Server::~Server() {
-    int result;
+    int result = shutdown(this->hostSocket, SHUT_RDWR);
+    if (isError(result)) {
+        std::cerr << "[Server::~Server] Error: Failed to shutdown server socket. Error code " << errno << "." << std::endl;
+    }
+
     for (const auto& connection : this->connections) {
         result = ::close(connection.second);
         if (isError(result)) {
@@ -173,8 +177,14 @@ void Server::send(const connectionId_t &connectionId, const std::string &data) {
     }
 }
 
+void Server::setCallback(const server_callback_t &inputCallback) {
+    this->callback = inputCallback;
+}
+
 void Server::run() {
     while (true) {
         // use epoll to monitor both the original server socket and all other connections
+        this->listen();
+        this->accept(0);
     }
 }

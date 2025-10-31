@@ -11,7 +11,6 @@ void INThandler(int sig) {
 
     std::cerr << "\nShutting down..." << std::endl;
 
-    shutdown(server->hostSocket, SHUT_RDWR);
     delete server;
 
     exit(0);
@@ -23,13 +22,14 @@ int main() {
     // do stuff
     server = new Server(SERVER_IP_ADDRESS, SERVER_PORT);
     
-    server->addRoute("/", [](const HttpRequest &request) {
+    server->setCallback([](const HttpRequest &request) {
         std::cout << "Connected." << std::endl;
         request.print();
 
         HttpResponse placeholder;
         return placeholder;
     });
+    
     server->run();
 
     delete server;
