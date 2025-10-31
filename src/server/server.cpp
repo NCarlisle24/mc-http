@@ -5,10 +5,18 @@ Server::Server(const std::string &ipAddress, const short &port) {
     this->port = port;
 
     // create the socket
-    hostSocket = ::socket(AF_INET, SOCK_STREAM, 0); // IPv4, stream socket, TCP
-    if (!isValidSocket(hostSocket)) {
+    this->hostSocket = ::socket(AF_INET, SOCK_STREAM, 0); // IPv4, stream socket, TCP
+    if (!isValidSocket(this->hostSocket)) {
         std::cerr << "[Server::Server] Error: Failed to create socket. Error code " << errno
                     << std::endl;
+        return;
+    }
+
+    int opt = 1;
+    int result = setsockopt(this->hostSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    if (isError(result)) {
+        std::cerr << "[Server::Server] Error: Failed to set SO_REUSEADDR on host socket. Error code "
+                  << errno << std::endl;
         return;
     }
 
@@ -16,7 +24,7 @@ Server::Server(const std::string &ipAddress, const short &port) {
     struct sockaddr_in serverInfo;
     serverInfo.sin_family = AF_INET; // IPv4
     serverInfo.sin_port = htons(port); // IPv4
-    int result = inet_pton(AF_INET, ipAddress.c_str(), &(serverInfo.sin_addr.s_addr));
+    result = inet_pton(AF_INET, ipAddress.c_str(), &(serverInfo.sin_addr.s_addr));
     if (result < 0) {
         std::cerr << "[Server::Server] Error: Failed to convert IP address '" << ipAddress
                   << "' to network short. Error code " << errno << "." << std::endl;
@@ -108,6 +116,8 @@ void Server::close(const connectionId_t &connectionId) {
         return;
     }
 
+    this->threadPool->awaitConnectionTasks(connectionId);
+
     int result = ::close(this->connections[connectionId]);
     if (isError(result)) {
         std::cerr << "[Server::close] Error: Failed to close connection with identifier '" << connectionId
@@ -137,21 +147,18 @@ void Server::receive(const connectionId_t &connectionId, const server_callback_t
         return;
     }
 
-    socket_t connection = this->connections[connectionId];
-
-    // TODO: change the scope of the lambda
-    this->threadPool->enqueueTask(connectionId, [&connection, &callback]() {
+    this->threadPool->enqueueTask(connectionId, [this, &connectionId, &callback]() {
         std::string buffer(RECEIVE_BUFFER_SIZE, '\0');
-        int result = recv(connection, (char*)buffer.c_str(), RECEIVE_BUFFER_SIZE, 0);
+        int result = recv(this->connections[connectionId], (char*)buffer.c_str(), RECEIVE_BUFFER_SIZE, 0);
         HttpRequest request(buffer);
         HttpResponse response = callback(request);
         // send it here
 
         // testing
-        std::string placeholder = "This should be working";
-        result = ::send(connection, placeholder.c_str(), placeholder.length(), 0);
-        result = ::close(connection);
+        this->send(0, "This should be working");
     });
+
+    this->close(0);
 }
 
 std::string Server::receiveSync(const connectionId_t &connectionId) {
@@ -198,8 +205,6 @@ void Server::run() {
     this->accept(0);
     this->receive(0, this->callback);
 
-    while (true) {
-        // use epoll to monitor both the original server socket and all other connections
-        
-    }
+    // use epoll to monitor both the original server socket and all other connections
+    while (true) {}
 }
