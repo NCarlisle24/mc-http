@@ -21,6 +21,7 @@ int main() {
 
     // do stuff
     server = new Server(SERVER_IP_ADDRESS, SERVER_PORT);
+    if (!server->isBound) return 1;
     
     server->setCallback([](const HttpRequest &request) {
         std::cout << "Connected." << std::endl;

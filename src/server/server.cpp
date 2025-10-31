@@ -61,6 +61,7 @@ void Server::listen(const size_t &numThreads, const size_t &tasksQueueSize, cons
     if (isError(result)) {
         std::cerr << "[Server::listen] Error: Failed to listen to socket on address'" << this->ipAddress
                     << ":" << this->port << "'. Error code " << errno << "." << std::endl;
+        
         return;
     }
 
@@ -136,14 +137,20 @@ void Server::receive(const connectionId_t &connectionId, const server_callback_t
         return;
     }
 
-    socket_t serverSocket = this->connections[connectionId];
+    socket_t connection = this->connections[connectionId];
 
-    this->threadPool->enqueueTask(connectionId, [&serverSocket, &callback]() {
+    // TODO: change the scope of the lambda
+    this->threadPool->enqueueTask(connectionId, [&connection, &callback]() {
         std::string buffer(RECEIVE_BUFFER_SIZE, '\0');
-        recv(serverSocket, (char*)buffer.c_str(), RECEIVE_BUFFER_SIZE, 0);
+        int result = recv(connection, (char*)buffer.c_str(), RECEIVE_BUFFER_SIZE, 0);
         HttpRequest request(buffer);
         HttpResponse response = callback(request);
         // send it here
+
+        // testing
+        std::string placeholder = "This should be working";
+        result = ::send(connection, placeholder.c_str(), placeholder.length(), 0);
+        result = ::close(connection);
     });
 }
 
@@ -182,9 +189,17 @@ void Server::setCallback(const server_callback_t &inputCallback) {
 }
 
 void Server::run() {
+    this->listen();
+    if (!this->isListening) {
+        return;
+    }
+
+    // testing
+    this->accept(0);
+    this->receive(0, this->callback);
+
     while (true) {
         // use epoll to monitor both the original server socket and all other connections
-        this->listen();
-        this->accept(0);
+        
     }
 }

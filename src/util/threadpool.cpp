@@ -23,6 +23,7 @@ static void* workerThread(void* argument) {
 
 ThreadPool::ThreadPool(const size_t &numThreads, const size_t &queueSize) {
     this->threads = (pthread_t*)malloc(numThreads * sizeof(pthread_t));
+    this->maxTasks = queueSize;
 
     for (size_t i = 0; i < numThreads; i++) {
         pthread_create(this->threads + i, NULL, workerThread, this);
@@ -37,7 +38,7 @@ ThreadPool::~ThreadPool() {
 
 bool ThreadPool::enqueueTask(const connectionId_t &connectionId, const task_function_t &taskFunction) {
     if (tasks.size() >= this->maxTasks) {
-        std::cerr << "[ThreadPool] Warning: Could not enqueue task with connection ID '"
+        std::cerr << "[ThreadPool::enqueueTask] Warning: Could not enqueue task for connection ID '"
             << connectionId << "' because queue is full." << std::endl;
         return false;
     }
