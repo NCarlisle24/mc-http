@@ -11,6 +11,7 @@
 #include <iostream>
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <sys/epoll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -40,6 +41,7 @@ class Server {
         std::unordered_map<connectionId_t, socket_t> connections;
         std::string ipAddress;
         ThreadPool* threadPool;
+        struct epoll_event* epollEvents;
         short port;
         bool isBound = false;
         bool isListening = false;
@@ -52,7 +54,9 @@ class Server {
                     const size_t &listeningQueueSize = DEFAULT_LISTENING_QUEUE_SIZE);
         void accept(const connectionId_t &connectionId);
         void close(const connectionId_t &connectionId);
+        void closeSelf();
         std::string receiveSync(const connectionId_t &connectionId);
         void receive(const connectionId_t &connectionId, const server_callback_t &callback);
         void send(const connectionId_t &connectionId, const std::string &data);
+        void run();
 };

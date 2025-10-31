@@ -45,15 +45,11 @@ Server::~Server() {
         }
     }
 
-    result = ::close(this->hostSocket);
-    if (isError(result)) {
-        std::cerr << "[Server::~Server] Error: Failed to close server socket. Error code "
-                  << errno << "." << std::endl;
-        
-        return;
-    }
+    this->closeSelf();
 
     this->isBound = false;
+
+    free(this->epollEvents);
 }
 
 void Server::listen(const size_t &numThreads, const size_t &tasksQueueSize, const size_t &listeningQueueSize) {
@@ -65,6 +61,9 @@ void Server::listen(const size_t &numThreads, const size_t &tasksQueueSize, cons
     }
 
     this->threadPool = new ThreadPool(numThreads, tasksQueueSize);
+
+    // TODO: setup epoll
+    this->epollEvents = (struct epoll_event*)malloc(listeningQueueSize * sizeof(struct epoll_event));
 
     this->isListening = true;
 }
@@ -114,6 +113,18 @@ void Server::close(const connectionId_t &connectionId) {
     this->connections.erase(connectionId);
 }
 
+void Server::closeSelf() {
+    int result = ::close(this->hostSocket);
+    if (isError(result)) {
+        std::cerr << "[Server::~Server] Error: Failed to close server socket. Error code "
+                  << errno << "." << std::endl;
+        
+        return;
+    }
+
+    this->isBound = false;
+}
+
 void Server::receive(const connectionId_t &connectionId, const server_callback_t &callback) {
     if (!this->connections.contains(connectionId)) {
         std::cerr << "[Server::receive] Error: Connection with ID '" << connectionId
@@ -126,8 +137,8 @@ void Server::receive(const connectionId_t &connectionId, const server_callback_t
     this->threadPool->enqueueTask(connectionId, [&serverSocket, &callback]() {
         std::string buffer(RECEIVE_BUFFER_SIZE, '\0');
         recv(serverSocket, (char*)buffer.c_str(), RECEIVE_BUFFER_SIZE, 0);
-        HttpRequest requestInput(buffer);
-        HttpResponse response = callback(requestInput);
+        HttpRequest request(buffer);
+        HttpResponse response = callback(request);
         // send it here
     });
 }
@@ -159,5 +170,11 @@ void Server::send(const connectionId_t &connectionId, const std::string &data) {
                   << connectionId << "'.  Error code " << errno << "." << std::endl;
         
         return;
+    }
+}
+
+void Server::run() {
+    while (true) {
+        // use epoll to monitor both the original server socket and all other connections
     }
 }

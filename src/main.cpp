@@ -4,12 +4,12 @@
 #define SERVER_IP_ADDRESS "127.0.0.1"
 #define SERVER_PORT 3000
 
-WebServer* server;
+Server* server;
 
 void INThandler(int sig) {
     signal(sig, SIG_IGN); // ignore the signal
 
-    std::cerr << "Shutting down server..." << std::endl;
+    std::cerr << "\nShutting down..." << std::endl;
 
     shutdown(server->hostSocket, SHUT_RDWR);
     delete server;
@@ -18,9 +18,11 @@ void INThandler(int sig) {
 }
 
 int main() {
-    // do stuff
-    server = new WebServer(SERVER_IP_ADDRESS, SERVER_PORT);
+    signal(SIGINT, INThandler);
 
+    // do stuff
+    server = new Server(SERVER_IP_ADDRESS, SERVER_PORT);
+    
     server->addRoute("/", [](const HttpRequest &request) {
         std::cout << "Connected." << std::endl;
         request.print();

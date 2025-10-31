@@ -10,10 +10,8 @@ typedef std::function<HttpResponse(HttpRequest)> ws_callback_t;
 
 class WebServer : public Server {
     public:
-        size_t totalConnectionsMade = 0;
         std::unordered_map<std::string, ws_callback_t> routes;
         
         WebServer(const std::string &ipAddress, const short &port) : Server(ipAddress, port) {};
         void addRoute(const std::string &path, const ws_callback_t &middleware);
-        void run();
 };
