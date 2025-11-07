@@ -13,7 +13,7 @@
 typedef std::function<void()> task_function_t;
 
 typedef struct {
-    connectionId_t connectionId;
+    connection_id_t connectionId;
     task_function_t function;
     bool isRunning = false;
     bool isComplete = false;
@@ -30,10 +30,9 @@ class ThreadPool {
         pthread_cond_t tasksCondition;
         bool isShuttingDown = false;
 
-        ThreadPool(const size_t &inputNumThreads = 10, const size_t &queueSize = 10);
+        ThreadPool(const size_t &numThreads = 10, const size_t &queueSize = 10);
         ~ThreadPool();
-        bool enqueueTask(const connectionId_t &connectionId, const task_function_t &taskFunction);
-        // TODO: make awaitConnectionTasks() track all relevant tasks in the queue, not just the last one
-        void awaitConnectionTasks(const connectionId_t &connectionId);
+        bool enqueueTask(const connection_id_t &connectionId, const task_function_t &taskFunction);
+        void awaitConnectionTasks(const connection_id_t &connectionId);
         void shutdown();
 };

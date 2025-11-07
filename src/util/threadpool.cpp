@@ -36,13 +36,13 @@ static void* workerThread(void* argument) {
     return NULL;
 }
 
-ThreadPool::ThreadPool(const size_t &inputNumThreads, const size_t &queueSize) {
-    this->threads = (pthread_t*)malloc(inputNumThreads * sizeof(pthread_t));
-    this->numThreads = inputNumThreads;
+ThreadPool::ThreadPool(const size_t &numThreads, const size_t &queueSize) {
+    this->threads = (pthread_t*)malloc(numThreads * sizeof(pthread_t));
+    this->numThreads = numThreads;
     this->maxTasks = queueSize;
 
     for (size_t i = 0; i < numThreads; i++) {
-        pthread_create(this->threads + i, NULL, workerThread, this);
+        pthread_create(this->threads + i, NULL, workerThread, this); // pass 'this' in as the argument
     }
 }
 
@@ -50,7 +50,7 @@ ThreadPool::~ThreadPool() {
     this->shutdown();
 }
 
-bool ThreadPool::enqueueTask(const connectionId_t &connectionId, const task_function_t &taskFunction) {
+bool ThreadPool::enqueueTask(const connection_id_t &connectionId, const task_function_t &taskFunction) {
     if (this->tasks.size() >= this->maxTasks) {
         std::cerr << "[ThreadPool::enqueueTask] Warning: Could not enqueue task for connection ID '"
             << connectionId << "' because queue is full." << std::endl;
@@ -70,7 +70,7 @@ bool ThreadPool::enqueueTask(const connectionId_t &connectionId, const task_func
     return true;
 }
 
-void ThreadPool::awaitConnectionTasks(const connectionId_t &connectionId) {
+void ThreadPool::awaitConnectionTasks(const connection_id_t &connectionId) {
     pthread_mutex_lock(&(this->tasksMutex));
 
     std::vector<std::list<Task>::iterator> remainingTasks;

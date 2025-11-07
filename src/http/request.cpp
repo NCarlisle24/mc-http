@@ -53,6 +53,8 @@ HttpRequest::HttpRequest(const std::string &requestString) {
 
         readHttpHeader(line.c_str(), headerKey, headerValue);
 
+        if (strcmp(headerKey, "Connection") == 0 && strcmp(headerValue, "close") == 0) this->isCloseRequest = true;
+
         // convert the key to lowercase for hashing
         strncpy(headerHashKey, headerKey, HEADER_KEY_BUFFER_LENGTH);
         const size_t keyLength = strlen(headerHashKey);

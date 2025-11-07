@@ -8,6 +8,7 @@
 // simple unix/posix! :DDD
 #include <arpa/inet.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <iostream>
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -20,30 +21,55 @@
 #define DEFAULT_LISTENING_QUEUE_SIZE 20
 #define DEFAULT_TASKS_QUEUE_SIZE 20
 #define DEFAULT_NUM_THREADS 20
+#define DEFAULT_MAX_CONNECTIONS 30
 #define RECEIVE_BUFFER_SIZE 1024
 #define INVALID_SOCKET -1
 
 typedef int socket_t;
-typedef std::function<HttpResponse(const HttpRequest&)> server_callback_t;
 // TODO: make this accept any request, not just HTTP
+typedef std::function<HttpResponse(const HttpRequest&)> server_callback_t;
+typedef struct {
+    connection_id_t connectionId;
+} epoll_argument_t;
 
-inline bool isValidSocket(socket_t sock) {
+static inline bool isValidSocket(socket_t sock) {
     return sock >= 0;
 }
 
-inline bool isError(int result) {
+static inline bool isError(int result) {
     return result < 0;
 }
 
+static inline void makeSocketNonBlocking(socket_t socket) {
+    int flags = fcntl(socket, F_GETFL, 0);
+    if (isError(flags)) {
+        std::cerr << "[makeSocketNonBlocking] Error: Failed to get socket flags via fcntl. Error code " << errno << std::endl;
+        return;
+    }
+
+    flags |= O_NONBLOCK;
+    int result = fcntl(socket, F_SETFL, flags);
+    if (isError(result)) {
+        std::cerr << "[makeSocketNonBlocking] Error: Failed to set socket flags via fcntl. Error code " << errno << std::endl;
+    }
+
+    return;
+}
+
+// TODO: separate public and private stuff
 class Server {
     public:
         socket_t hostSocket;
-        std::unordered_map<connectionId_t, socket_t> connections;
+        // TODO: change how connections are stored so that old IDs can be used
+        std::unordered_map<connection_id_t, socket_t> connections;
         std::string ipAddress;
         ThreadPool* threadPool;
+        int epollManager;
         struct epoll_event* epollEvents;
         server_callback_t callback;
         short port;
+        size_t maxConnections;
+        size_t numConnections = 0;
         bool isBound = false;
         bool isListening = false;
         bool isAccepting = false;
@@ -52,13 +78,17 @@ class Server {
         ~Server();
         void listen(const size_t &numThreads = DEFAULT_NUM_THREADS,
                     const size_t &tasksQueueSize = DEFAULT_TASKS_QUEUE_SIZE,
-                    const size_t &listeningQueueSize = DEFAULT_LISTENING_QUEUE_SIZE);
-        void accept(const connectionId_t &connectionId);
-        void close(const connectionId_t &connectionId);
-        void closeSelf();
-        std::string receiveSync(const connectionId_t &connectionId);
-        void receive(const connectionId_t &connectionId, const server_callback_t &callback);
-        void send(const connectionId_t &connectionId, const std::string &data);
+                    const size_t &listeningQueueSize = DEFAULT_LISTENING_QUEUE_SIZE,
+                    const size_t &maxConnections = DEFAULT_MAX_CONNECTIONS);
+        void accept(const connection_id_t &connectionId);
+        void close(const connection_id_t &connectionId);
+        void closeHost();
+        std::string receiveSync(const connection_id_t &connectionId);
+        void receive(const connection_id_t &connectionId);
+        void send(const connection_id_t &connectionId, const std::string &data);
         void setCallback(const server_callback_t &inputCallback);
         void run();
+    
+    private:
+
 };

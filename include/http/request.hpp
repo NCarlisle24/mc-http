@@ -1,5 +1,7 @@
 #pragma once
 
+#include <http/http.hpp>
+
 #include <algorithm>
 #include <cstddef>
 #include <cstdio>
@@ -33,18 +35,27 @@ void inline readHttpHeader(const char* const &header, char* const &key, char* co
     value[j] = '\0';
 }
 
-typedef struct {
-    std::string key;
-    std::string value;
-} HttpHeader;
-
 class HttpRequest {
     public:
+        bool isCloseRequest = false;
+
+        // public methods
+        HttpRequest(const std::string &requestString);
+        // ~HttpRequest();
+        void print() const;
+        void printQueryParameters() const;
+        std::unordered_map<std::string, std::string> getHeaders() const;
+        std::unordered_map<std::string, std::string> getQueryParameters() const;
+    
+    private:
         // implemented
         std::string method; // GET, POST, etc.
         std::string path; // url
         std::string rawPath; // url with query parameters
         std::string httpVersion;
+
+        std::unordered_map<std::string, HttpHeader> headers; // keys are case-insensitive
+        std::unordered_map<std::string, std::string> queryParameters; // keys are case-sensitive
 
         // not implemented
         std::string body; // relevant for POST and PUT
@@ -56,16 +67,4 @@ class HttpRequest {
         std::string contentType;
         size_t contentLength;
         int keepAlive;
-
-        // public methods
-        HttpRequest(const std::string &requestString);
-        // ~HttpRequest();
-        void print() const;
-        void printQueryParameters() const;
-        std::unordered_map<std::string, std::string> getHeaders() const;
-        std::unordered_map<std::string, std::string> getQueryParameters() const;
-    
-    private:
-        std::unordered_map<std::string, HttpHeader> headers; // keys are case-insensitive
-        std::unordered_map<std::string, std::string> queryParameters; // keys are case-sensitive
 };

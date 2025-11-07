@@ -24,10 +24,15 @@ int main() {
     if (!server->isBound) return 1;
     
     server->setCallback([](const HttpRequest &request) {
-        std::cout << "Connected." << std::endl;
-        request.print();
+        // request.print();
+        // std::cerr << "-------------------" << std::endl;
 
         HttpResponse placeholder;
+
+        std::string data = "<h1>Hello world!</h1>";
+        placeholder.setBody(data);
+        placeholder.setRepresentationHeader("Content-Type", "text/html");
+        placeholder.setRepresentationHeader("Content-Length", std::to_string(data.size()));
         return placeholder;
     });
     

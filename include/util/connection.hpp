@@ -1,3 +1,3 @@
 #pragma once
 
-typedef unsigned int connectionId_t;
+typedef unsigned int connection_id_t;
